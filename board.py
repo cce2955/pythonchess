@@ -155,7 +155,13 @@ class Board:
         Check if the king of the given color is under attack.
         """
         king_pos = self.find_king(color)
+        if king_pos is None:
+            # Option 1: Raise an error if the king is missing
+            raise ValueError(f"The {color} king is missing from the board.")
+            # Option 2: Handle missing king gracefully, e.g., assume checkmate or stalemate
+            # return True  # or return False, depending on the desired behavior
         return self.is_square_attacked(king_pos, color)
+
 
     def find_king(self, color):
         for row in range(8):

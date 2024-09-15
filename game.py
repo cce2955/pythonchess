@@ -4,6 +4,7 @@ from utils import notation_to_index, index_to_notation
 
 class Game:
     def __init__(self, board=None):
+        print(f"Initializing Game with board: {board}")
         self.board = board if board else Board()
         self.current_player = 'white'
 
