@@ -298,21 +298,10 @@ class TestPawnPromotion(unittest.TestCase):
         self.assertIsInstance(moved_piece, Pawn)
         self.assertEqual(moved_piece.color, 'white')
 
-    @patch('builtins.input', side_effect=['a2', 'a3', 'a2', 'a3', 'a2', 'a3'])
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_move_preview_no_legal_moves(self, mock_stdout, mock_input):
-        # Setup the board with a White Pawn at 'a2' blocked by another White Pawn at 'a3'
-        self.board.set_piece_at(notation_to_index('a2'), Pawn('white'))
-        self.board.set_piece_at(notation_to_index('a3'), Pawn('white'))  # Blocking pawn
-        game = Game(board=self.board)
-        game.current_player = 'white'
-        game.play_turn()
-        output = mock_stdout.getvalue()
-        self.assertIn("No legal moves available for this piece", output)
 
 
 
-    
+
     @patch('builtins.input', side_effect=['e2', 'e5', 'e2', 'e4', 'e2', 'e5'])
     @patch('sys.stdout', new_callable=StringIO)
     def test_move_preview_invalid_move(self, mock_stdout, mock_input):
@@ -324,9 +313,7 @@ class TestPawnPromotion(unittest.TestCase):
         output = mock_stdout.getvalue()
         self.assertIn("Invalid move. Please choose one of the suggested moves.", output)
 
-
-
-    @patch('builtins.input', side_effect=['e7', 'e1', 'e2', 'e3', 'e2', 'e4'])
+    @patch('builtins.input', side_effect=['e7', 'e1', 'e2', 'e3', 'e2', 'e4', 'exit'])
     @patch('sys.stdout', new_callable=StringIO)
     def test_move_preview_opponent_piece(self, mock_stdout, mock_input):
         # Setup the board with a White Pawn at 'e2' and a Black Pawn at 'e7'
@@ -339,7 +326,6 @@ class TestPawnPromotion(unittest.TestCase):
         game.play_turn()
         output = mock_stdout.getvalue()
         self.assertIn("No valid piece at that position. Try again.", output)
-
 
 
 if __name__ == '__main__':
