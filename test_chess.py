@@ -1,14 +1,10 @@
-# test_chess.py
-
 import unittest
 from unittest.mock import patch
 from io import StringIO
 from pieces import Pawn, Knight, Bishop, Rook, Queen, King
 from board import Board
 from game import Game
-print(Game)
 from utils import notation_to_index, index_to_notation
-
 
 
 class TestUtils(unittest.TestCase):
@@ -26,10 +22,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(index_to_notation(4, 4), 'e4')
         self.assertIsNone(index_to_notation(-1, 0))
         self.assertIsNone(index_to_notation(8, 8))
+
+
 class TestPieces(unittest.TestCase):
     def setUp(self):
+        # Initialize an empty board for each test
         self.board = Board()
         self.board.grid = [[None for _ in range(8)] for _ in range(8)]  # Empty board
+        self.board.set_piece_at(notation_to_index('e1'), King('white'))
+        self.board.set_piece_at(notation_to_index('e8'), King('black'))
 
     def test_pawn_moves(self):
         pawn = Pawn('white')
@@ -89,9 +90,11 @@ class TestPieces(unittest.TestCase):
             # Vertical moves
             (3, 4), (2, 4), (1, 4),  # Can capture enemy at (1, 4)
             # (0, 4) blocked after capturing enemy
-            (5, 4), (6, 4), (7, 4)
+            (5, 4), (6, 4)
+            # Removed (7, 4)
         ]
         self.assertCountEqual(moves, expected_moves)
+
 
     def test_queen_moves(self):
         queen = Queen('white')
@@ -104,7 +107,7 @@ class TestPieces(unittest.TestCase):
             (4, 5), (4, 6),  # Can capture enemy at (4, 6)
             (4, 3), (4, 2), (4, 1), (4, 0),
             # Vertical
-            (5, 4), (6, 4), (7, 4),
+            (5, 4), (6, 4),
             (3, 4),
             # (2, 4) blocked by ally
             # Diagonals
@@ -114,6 +117,7 @@ class TestPieces(unittest.TestCase):
             (3, 5), (2, 6), (1, 7)
         ]
         self.assertCountEqual(moves, expected_moves)
+
 
     def test_king_moves(self):
         king = King('white')
@@ -154,8 +158,8 @@ class TestPieces(unittest.TestCase):
     def test_pawn_promotion(self):
         pawn = Pawn('white')
         self.board.set_piece_at((1, 0), pawn)
-        with unittest.mock.patch('builtins.input', return_value='Q'):
-            self.board.move_piece((1, 0), (0, 0))
+        with patch('builtins.input', return_value='Q'):
+            self.board.move_piece((1, 0), (0, 0))  # Move to 'a1' for promotion
         promoted_piece = self.board.get_piece_at((0, 0))
         self.assertIsInstance(promoted_piece, Queen)
 
@@ -175,6 +179,7 @@ class TestPieces(unittest.TestCase):
         moves = white_pawn.get_possible_moves((3, 4), self.board)
         expected_moves = [(2, 4), (2, 5)]  # e5-e6 and en passant to f6
         self.assertCountEqual(moves, expected_moves)
+
 
 class TestBoard(unittest.TestCase):
     def test_initial_board_setup(self):
@@ -221,41 +226,41 @@ class TestBoard(unittest.TestCase):
         self.assertIs(board.get_piece_at((2, 4)), white_pawn)
         self.assertIsNone(board.get_piece_at((3, 3)))
         self.assertIsNone(board.get_piece_at((3, 4)))  # Captured pawn removed
+
+
 class TestGame(unittest.TestCase):
     def test_checkmate(self):
-         game = Game()
-         # Perform moves to reach Fool's Mate position
-         # 1. f3 e5
-         game.board.move_piece((6, 5), (5, 5))  # White pawn f2-f3
-         game.current_player = 'black'
-         game.board.move_piece((1, 4), (3, 4))  # Black pawn e7-e5
-         game.current_player = 'white'
-         # 2. g4 Qh4#
-         game.board.move_piece((6, 6), (4, 6))  # White pawn g2-g4
-         game.current_player = 'black'
-         game.board.move_piece((0, 3), (4, 7))  # Black queen d8-h4 (Qh4#)
-         game.current_player = 'white'
-         # Now check if the game detects checkmate
-         self.assertTrue(game.is_game_over())
-
-
+        game = Game()
+        # Perform moves to reach Fool's Mate position
+        # 1. f3 e5
+        game.board.move_piece((6, 5), (5, 5))  # White pawn f2-f3
+        game.current_player = 'black'
+        game.board.move_piece((1, 4), (3, 4))  # Black pawn e7-e5
+        game.current_player = 'white'
+        # 2. g4 Qh4#
+        game.board.move_piece((6, 6), (4, 6))  # White pawn g2-g4
+        game.current_player = 'black'
+        game.board.move_piece((0, 3), (4, 7))  # Black queen d8-h4 (Qh4#)
+        game.current_player = 'white'
+        # Now check if the game detects checkmate
+        self.assertTrue(game.is_game_over())
 
     def test_stalemate(self):
-         game = Game()
-         # Clear the board
-         game.board.grid = [[None for _ in range(8)] for _ in range(8)]
-         # Place the white king at h1 (7, 7)
-         white_king = King('white')
-         game.board.set_piece_at((7, 7), white_king)
-         # Place the black king at f2 (6, 5)
-         black_king = King('black')
-         game.board.set_piece_at((6, 5), black_king)
-         # Place the black queen at g2 (6, 6)
-         black_queen = Queen('black')
-         game.board.set_piece_at((6, 6), black_queen)
-         game.current_player = 'white'
-         # Now white has no legal moves but is not in check
-         self.assertTrue(game.is_game_over())
+        game = Game()
+        # Clear the board
+        game.board.grid = [[None for _ in range(8)] for _ in range(8)]
+        # Place the white king at h1 (7, 7)
+        white_king = King('white')
+        game.board.set_piece_at((7, 7), white_king)
+        # Place the black king at f2 (6, 5)
+        black_king = King('black')
+        game.board.set_piece_at((6, 5), black_king)
+        # Place the black queen at g2 (6, 6)
+        black_queen = Queen('black')
+        game.board.set_piece_at((6, 6), black_queen)
+        game.current_player = 'white'
+        # Now white has no legal moves but is not in check
+        self.assertTrue(game.is_game_over())
 
 
 class TestPawnPromotion(unittest.TestCase):
@@ -293,12 +298,12 @@ class TestPawnPromotion(unittest.TestCase):
         self.assertIsInstance(moved_piece, Pawn)
         self.assertEqual(moved_piece.color, 'white')
 
-
-    @patch('builtins.input', side_effect=['a1', 'e1'])  # Added 'e1' to select the king
+    @patch('builtins.input', side_effect=['a2', 'a3', 'a2', 'a3', 'a2', 'a3'])
     @patch('sys.stdout', new_callable=StringIO)
     def test_move_preview_no_legal_moves(self, mock_stdout, mock_input):
-        # Setup the board with a White Pawn at 'a2' and both kings
+        # Setup the board with a White Pawn at 'a2' blocked by another White Pawn at 'a3'
         self.board.set_piece_at(notation_to_index('a2'), Pawn('white'))
+        self.board.set_piece_at(notation_to_index('a3'), Pawn('white'))  # Blocking pawn
         game = Game(board=self.board)
         game.current_player = 'white'
         game.play_turn()
@@ -306,14 +311,12 @@ class TestPawnPromotion(unittest.TestCase):
         self.assertIn("No legal moves available for this piece", output)
 
 
-    def input_generator(inputs):
-        for item in inputs:
-            yield item
 
-    @patch('builtins.input', side_effect=input_generator(['e2', 'e5', 'e4']))
+    
+    @patch('builtins.input', side_effect=['e2', 'e5', 'e2', 'e4', 'e2', 'e5'])
     @patch('sys.stdout', new_callable=StringIO)
     def test_move_preview_invalid_move(self, mock_stdout, mock_input):
-        # Setup the board with a White Pawn at 'e2' and no obstacles
+        # Setup the board with a White Pawn at 'e2'
         self.board.set_piece_at(notation_to_index('e2'), Pawn('white'))
         game = Game(board=self.board)
         game.current_player = 'white'
@@ -322,10 +325,11 @@ class TestPawnPromotion(unittest.TestCase):
         self.assertIn("Invalid move. Please choose one of the suggested moves.", output)
 
 
-    @patch('builtins.input', side_effect=['e7', 'e1'])  # Added 'e1' to select the king
+
+    @patch('builtins.input', side_effect=['e7', 'e1', 'e2', 'e3', 'e2', 'e4'])
     @patch('sys.stdout', new_callable=StringIO)
     def test_move_preview_opponent_piece(self, mock_stdout, mock_input):
-        # Setup the board with a White Pawn at 'e2', a Black Pawn at 'e7', and both kings
+        # Setup the board with a White Pawn at 'e2' and a Black Pawn at 'e7'
         self.board.set_piece_at(notation_to_index('e2'), Pawn('white'))
         self.board.set_piece_at(notation_to_index('e7'), Pawn('black'))
         self.board.set_piece_at(notation_to_index('e1'), King('white'))
