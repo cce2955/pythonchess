@@ -3,8 +3,8 @@ from utils import notation_to_index, index_to_notation
 
 
 class Game:
-    def __init__(self):
-        self.board = Board()
+    def __init__(self, board=None):
+        self.board = board if board else Board()
         self.current_player = 'white'
 
     def switch_player(self):

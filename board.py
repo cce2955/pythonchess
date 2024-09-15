@@ -60,6 +60,7 @@ class Board:
                     capture_row = start_pos[0]
                     captured_pawn_pos = (capture_row, end_pos[1])
                     self.set_piece_at(captured_pawn_pos, None)
+
             self.last_move = (piece, start_pos, end_pos)
             return True
         else:

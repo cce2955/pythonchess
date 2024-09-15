@@ -28,7 +28,7 @@ class Pawn(Piece):
         if board.is_empty(forward_pos):
             moves.append(forward_pos)
             # Two squares forward from starting position
-            if (self.color == 'white' and row == 6) or (self.color == 'black' and row == 1):
+            if not self.has_moved:
                 two_forward_pos = (row + 2 * direction, col)
                 if board.is_empty(two_forward_pos):
                     moves.append(two_forward_pos)
@@ -42,9 +42,20 @@ class Pawn(Piece):
                     target_piece = board.get_piece_at(capture_pos)
                     if target_piece and target_piece.color != self.color:
                         moves.append(capture_pos)
-                    # En passant capture logic can be added here
+                    else:
+                        # En passant capture
+                        # Check if last move was a pawn moving two squares to adjacent file
+                        # En passant capture
+                        if board.last_move:
+                            last_piece, last_start, last_end = board.last_move
+                            if isinstance(last_piece, Pawn) and last_piece.color != self.color:
+                                if abs(last_end[0] - last_start[0]) == 2:
+                                    if last_end[0] == row and last_end[1] == new_col:
+                                        en_passant_pos = (row + direction, new_col)
+                                        moves.append(en_passant_pos)
 
         return moves
+
 class Knight(Piece):
     def __init__(self, color):
         super().__init__(color)
