@@ -1,5 +1,6 @@
 from board import Board
-from utils import notation_to_index
+from utils import notation_to_index, index_to_notation
+
 
 class Game:
     def __init__(self):
@@ -37,42 +38,52 @@ class Game:
             self.board.display()
             print(f"{self.current_player}'s turn")
             start_notation = input("Enter the position of the piece to move (e.g., 'e2'): ").strip()
-            end_notation = input("Enter the position to move to (e.g., 'e4'): ").strip()
-            if start_notation.lower() == 'quit' or end_notation.lower() == 'quit':
+            if start_notation.lower() == 'quit':
                 print("Game ended by player.")
                 exit()
             start_pos = notation_to_index(start_notation)
-            end_pos = notation_to_index(end_notation)
-            if start_pos and end_pos:
+            if start_pos:
                 piece = self.board.get_piece_at(start_pos)
                 if piece and piece.color == self.current_player:
+                    # Get possible moves for the piece
                     possible_moves = piece.get_possible_moves(start_pos, self.board)
-                    if end_pos in possible_moves:
+                    # Filter out moves that would leave the king in check
+                    legal_moves = []
+                    for end_pos in possible_moves:
                         # Simulate the move
                         captured_piece = self.board.get_piece_at(end_pos)
                         self.board.set_piece_at(end_pos, piece)
                         self.board.set_piece_at(start_pos, None)
-                        if not self.board.is_in_check(self.current_player):
-                            # Undo temporary move
-                            self.board.set_piece_at(start_pos, piece)
-                            self.board.set_piece_at(end_pos, captured_piece)
-                            # Make the actual move
-                            if self.board.move_piece(start_pos, end_pos):
-                                valid_move = True
-                            else:
-                                print("Invalid move.")
+                        in_check = self.board.is_in_check(self.current_player)
+                        # Undo the move
+                        self.board.set_piece_at(start_pos, piece)
+                        self.board.set_piece_at(end_pos, captured_piece)
+                        if not in_check:
+                            legal_moves.append(end_pos)
+                    if not legal_moves:
+                        print("No legal moves available for this piece. Please choose another piece.")
+                        continue
+                    # Convert legal moves to algebraic notation
+                    move_notations = [index_to_notation(row, col) for (row, col) in legal_moves]
+                    print(f"Possible moves: {', '.join(move_notations)}")
+                    end_notation = input("Enter the position to move to (e.g., 'e4'): ").strip()
+                    if end_notation.lower() == 'quit':
+                        print("Game ended by player.")
+                        exit()
+                    end_pos = notation_to_index(end_notation)
+                    if end_pos and end_pos in legal_moves:
+                        if self.board.move_piece(start_pos, end_pos):
+                            valid_move = True
                         else:
-                            print("Move would leave king in check. Try again.")
-                            # Undo temporary move
-                            self.board.set_piece_at(start_pos, piece)
-                            self.board.set_piece_at(end_pos, captured_piece)
+                            print("Invalid move. Try again.")
                     else:
-                        print("Invalid move for that piece. Try again.")
+                        print("Invalid move. Please choose one of the suggested moves.")
                 else:
                     print("No valid piece at that position. Try again.")
             else:
                 print("Invalid notation. Use format like 'e2'.")
         self.switch_player()
+
 
 
     def play(self):

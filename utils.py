@@ -22,3 +22,4 @@ def index_to_notation(row, col):
     if 0 <= col < 8 and 0 <= row < 8:
         return f"{columns[col]}{rows[row]}"
     return None
+
